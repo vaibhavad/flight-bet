@@ -117,7 +117,7 @@
     function formatTime(timeStr) {
         if (!timeStr) return 'N/A';
         const date = new Date(timeStr);
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC' });
     }
 
     function convertToMinutes(time) {

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
@@ -14,6 +13,9 @@
             background-color: #e3f2fd;
             margin: 0;
             padding: 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
         .container {
             max-width: 600px;
@@ -62,6 +64,20 @@
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-10px); }
         }
+        footer {
+            margin-top: auto;
+            padding: 20px;
+            background-color: #0288d1;
+            color: white;
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        footer a {
+            color: white;
+            font-weight: bold;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
@@ -85,6 +101,9 @@
             </tbody>
         </table>
     </div>
+    <footer>
+        To place your bets, email <a href="mailto:vaibhav.adlakha@mila.quebec">vaibhav.adlakha@mila.quebec</a>
+    </footer>
     
 <script>
     async function fetchFlightData() {
@@ -95,6 +114,7 @@
         try {
             const response = await axios.get(apiUrl);
             const flightData = response.data.data[0];
+            console.log(response.data.data[0])
 
             if (flightData) {
                 const scheduled = formatTime(flightData.departure.scheduled);

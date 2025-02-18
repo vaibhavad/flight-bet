@@ -1,0 +1,185 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Will Marius Reach Home?</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #e3f2fd;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            background: white;
+            padding: 20px;
+            margin: auto;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .highlight {
+            color: #ff9800;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #0288d1;
+            color: white;
+        }
+        .plane {
+            position: absolute;
+            top: 10px;
+            right: -50px;
+            font-size: 24px;
+            animation: fly 5s infinite linear;
+        }
+        @keyframes fly {
+            0% { right: -50px; }
+            100% { right: 100%; }
+        }
+        .trophy {
+            font-size: 24px;
+            color: gold;
+            animation: bounce 1s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Will Marius Reach Home? <span class="plane">✈️</span></h1>
+        <p>Flight: AF 4085</p>
+        <p>Scheduled Departure: <span id="scheduled">Loading...</span></p>
+        <p>Estimated Departure: <span id="estimated" class="highlight">Loading...</span></p>
+        
+        <h2>Bets</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Predicted Time</th>
+                    <th>Difference</th>
+                </tr>
+            </thead>
+            <tbody id="betList">
+                <!-- Bets will be populated here -->
+            </tbody>
+        </table>
+    </div>
+    
+<script>
+    async function fetchFlightData() {
+        const apiKey = '20623da3a1889632a075988f62816d8d';
+        const flightIATA = 'AF4085';
+        const apiUrl = `https://api.aviationstack.com/v1/flights?access_key=${apiKey}&flight_iata=${flightIATA}`;
+
+        try {
+            const response = await axios.get(apiUrl);
+            const flightData = response.data.data[0];
+
+            if (flightData) {
+                const scheduled = formatTime(flightData.departure.scheduled);
+                const estimated = formatTime(flightData.departure.estimated);
+
+                document.getElementById("scheduled").textContent = scheduled;
+                document.getElementById("estimated").textContent = estimated;
+
+                if (estimated !== 'N/A') {
+                    updateBetList(estimated);
+                }
+            } else {
+                console.error('Flight data not found.');
+            }
+        } catch (error) {
+            console.error('Error fetching flight data:', error);
+        }
+    }
+
+    function formatTime(timeStr) {
+        if (!timeStr) return 'N/A';
+        const date = new Date(timeStr);
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+
+    function convertToMinutes(time) {
+        if (!time || !time.includes(':')) return NaN;
+        const match = time.match(/(\d+):(\d+) (AM|PM)/);
+        if (!match) return NaN;
+        let [_, hours, minutes, period] = match;
+        hours = Number(hours);
+        minutes = Number(minutes);
+        if (period === 'PM' && hours !== 12) hours += 12;
+        if (period === 'AM' && hours === 12) hours = 0;
+        return hours * 60 + minutes;
+    }
+
+    function calculateDifferences(estimatedTime) {
+        const estimatedMinutes = convertToMinutes(estimatedTime);
+        if (isNaN(estimatedMinutes)) return null;
+
+        let closest = null;
+        let minDiff = Infinity;
+
+        bets.forEach(bet => {
+            bet.difference = Math.abs(estimatedMinutes - convertToMinutes(bet.time));
+            if (bet.difference < minDiff) {
+                minDiff = bet.difference;
+                closest = bet;
+            }
+        });
+
+        return closest;
+    }
+
+    function updateBetList(estimatedTime) {
+        const betList = document.getElementById("betList");
+        betList.innerHTML = "";
+
+        const closestBet = calculateDifferences(estimatedTime);
+
+        bets.forEach(bet => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${bet.name}</td>
+                <td>${bet.time}</td>
+                <td ${bet === closestBet ? 'class="highlight trophy"' : ''}>${isNaN(bet.difference) ? 'N/A' : bet.difference + ' min'}</td>
+            `;
+            betList.appendChild(row);
+        });
+    }
+
+    const bets = [
+        { name: "SVM", time: "11:37 PM" },
+        { name: "Karolina", time: "07:20 AM" },
+        { name: "Vaibhav", time: "09:57 PM" },
+        { name: "Gaurav", time: "08:37 PM" },
+        { name: "Diego", time: "11:00 PM" },
+        { name: "Rabiul", time: "10:20 PM" },
+        { name: "Xing Han", time: "09:28 PM" },
+        { name: "Ces", time: "08:41 PM" },
+    ];
+
+    fetchFlightData();
+</script>
+
+</body>
+</html>

@@ -117,11 +117,11 @@
             console.log(response.data.data[0])
 
             if (flightData) {
-                const scheduled = formatTime(flightData.departure.scheduled);
-                const estimated = formatTime(flightData.departure.estimated);
+                const scheduled = flightData.departure.scheduled;
+                const estimated = flightData.departure.estimated;
 
-                document.getElementById("scheduled").textContent = scheduled;
-                document.getElementById("estimated").textContent = estimated;
+                document.getElementById("scheduled").textContent = formatTime(scheduled);
+                document.getElementById("estimated").textContent = formatTime(estimated);
 
                 if (estimated !== 'N/A') {
                     updateBetList(estimated);
@@ -137,38 +137,35 @@
     function formatTime(timeStr) {
         if (!timeStr) return 'N/A';
         const date = new Date(timeStr);
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC' });
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' });
     }
 
-    function convertToMinutes(time) {
-        if (!time || !time.includes(':')) return NaN;
-        const match = time.match(/(\d+):(\d+) (AM|PM)/);
-        if (!match) return NaN;
-        let [_, hours, minutes, period] = match;
-        hours = Number(hours);
-        minutes = Number(minutes);
-        if (period === 'PM' && hours !== 12) hours += 12;
-        if (period === 'AM' && hours === 12) hours = 0;
-        return hours * 60 + minutes;
+    function convertToMinutes(timeISO) {
+        if (!timeISO) return NaN;
+        const date = new Date(timeISO);
+        return date.getHours() * 60 + date.getMinutes();
     }
 
-    function calculateDifferences(estimatedTime) {
-        const estimatedMinutes = convertToMinutes(estimatedTime);
-        if (isNaN(estimatedMinutes)) return null;
+function calculateDifferences(estimatedTime) {
+    // Ensure estimatedTime is in ISO 8601 format
+    const estimatedDate = new Date(estimatedTime);
 
-        let closest = null;
-        let minDiff = Infinity;
+    let closest = null;
+    let minDiff = Infinity;
 
-        bets.forEach(bet => {
-            bet.difference = Math.abs(estimatedMinutes - convertToMinutes(bet.time));
-            if (bet.difference < minDiff) {
-                minDiff = bet.difference;
-                closest = bet;
-            }
-        });
+    bets.forEach(bet => {
+        // Convert bet.time to ISO 8601 format and align it with estimatedDate
+        let betDate = new Date(bet.time);
+        const diffInMs = Math.abs(betDate - estimatedDate);        
+        bet.difference = Math.floor(diffInMs / (1000 * 60));
+        if (bet.difference < minDiff) {
+            minDiff = bet.difference;
+            closest = bet;
+        }
+    });
 
-        return closest;
-    }
+    return closest;
+}
 
     function updateBetList(estimatedTime) {
         const betList = document.getElementById("betList");
@@ -180,24 +177,25 @@
             const row = document.createElement("tr");
             row.innerHTML = `
                 <td>${bet.name}</td>
-                <td>${bet.time}</td>
+                <td>${new Date(bet.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric'  })}</td>
                 <td ${bet === closestBet ? 'class="highlight trophy"' : ''}>${isNaN(bet.difference) ? 'N/A' : bet.difference + ' min'}</td>
             `;
             betList.appendChild(row);
         });
     }
-
     const bets = [
-        { name: "SVM", time: "11:37 PM" },
-        { name: "Karolina", time: "07:20 AM" },
-        { name: "Vaibhav", time: "09:57 PM" },
-        { name: "Gaurav", time: "08:37 PM" },
-        { name: "Diego", time: "11:00 PM" },
-        { name: "Rabiul", time: "10:20 PM" },
-        { name: "Xing Han", time: "09:28 PM" },
-        { name: "Ces", time: "08:41 PM" },
-    ];
+    { "name": "SVM", "time": "2025-02-18T23:37:00+00:00" },
+    { "name": "Karolina", "time": "2025-02-19T19:20:00+00:00" },
+    { "name": "Vaibhav", "time": "2025-02-18T21:57:00+00:00" },
+    { "name": "Gaurav", "time": "2025-02-18T20:37:00+00:00" },
+    { "name": "Diego", "time": "2025-02-18T23:00:00+00:00" },
+    { "name": "Rabiul", "time": "2025-02-18T22:20:00+00:00" },
+    { "name": "Xing Han", "time": "2025-02-18T21:28:00+00:00" },
+    { "name": "Ces", "time": "2025-02-18T20:41:00+00:00" },
+    { "name": "Benno", "time": "2025-02-19T11:00:00+00:00" },
+    { "name": "Mehar", "time": "2025-02-19T00:30:00+00:00" }
 
+];
     fetchFlightData();
 </script>
 
